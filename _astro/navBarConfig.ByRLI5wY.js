@@ -1,0 +1,1 @@
+var l=(o=>(o[o.Home=0]="Home",o[o.Archive=1]="Archive",o[o.About=2]="About",o[o.Friends=3]="Friends",o[o.Anime=4]="Anime",o[o.Diary=5]="Diary",o[o.Albums=6]="Albums",o[o.Projects=7]="Projects",o[o.Skills=8]="Skills",o[o.Timeline=9]="Timeline",o))(l||{});l.Home,l.Archive;

