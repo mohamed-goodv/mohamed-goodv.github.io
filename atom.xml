@@ -5,15 +5,76 @@
   <link href="https://mohamed-goodv.github.io/" rel="alternate" type="text/html"/>
   <link href="https://mohamed-goodv.github.io/atom.xml" rel="self" type="application/atom+xml"/>
   <id>https://mohamed-goodv.github.io/</id>
-  <updated>2026-05-26T20:27:08.531Z</updated>
+  <updated>2026-06-04T23:50:01.527Z</updated>
   <language>en</language>
+  <entry>
+    <title>Race condition Lead to 2FA Bypass</title>
+    <link href="https://mohamed-goodv.github.io/posts/2fa-bypass-with-race-condition/2fa-bypass-with-race-condition/" rel="alternate" type="text/html"/>
+    <id>https://mohamed-goodv.github.io/posts/2fa-bypass-with-race-condition/2fa-bypass-with-race-condition/</id>
+    <published>2026-06-05T00:00:00.000Z</published>
+    <updated>2026-06-05T00:00:00.000Z</updated>
+    <summary>Race condition Lead to 2FA bypass in an external bugbounty programe</summary>
+    <content type="html"><![CDATA[<h1>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</h1>
+<p>During my testing of a web application,</p>
+<p>I was testing the 2FA function in the web app, so I tried multiple ways to bypass it, but all of them failed and the function seemed secure.</p>
+<p>However, I became interested in how the application handled multiple verification attempts arriving at the same time.</p>
+<p>To test this scenario, I intercepted the OTP verification request and moved it to Burp Suite Repeater.</p>
+<h2><strong>Steps To Reproduce:</strong></h2>
+<ol>
+<li>
+<p>Navigate to the login portal and enter valid credentials for a victim account to reach the 2FA prompt.</p>
+</li>
+<li>
+<p>Intercept the 2FA submission request using Burp Suite.</p>
+</li>
+<li>
+<p>Send the intercepted request to Burp Repeater.</p>
+</li>
+<li>
+<p>Create a group of parallel requests (e.g., using Burp's "Send group (parallel)" feature or Turbo Intruder).</p>
+</li>
+<li>
+<p>In this group, include several requests with incorrect 2FA codes and include one request with the correct 2FA code.</p>
+</li>
+<li>
+<p>Send the requests concurrently.</p>
+</li>
+<li>
+<p>Observe that the server responds with <code>200 OK</code> for the request containing the valid code, returning an <code>autologin</code> token in the response body.</p>
+</li>
+</ol>
+<p><img src="./request1.png" alt="" /></p>
+<ol>
+<li>
+<p>At this point, I knew that the application takes this token and sends it to <code>/autologin/&lt;token&gt;</code> to generate the <code>access_token</code>.</p>
+<p><img src="./reqeust2.png" alt="" /></p>
+</li>
+</ol>
+<p><img src="bounty.png" alt="" /></p>
+<h2><strong>Impact</strong></h2>
+<p>This vulnerability renders the 2FA brute-force protection ineffective. An attacker with compromised credentials (e.g., via credential stuffing) can utilize automated tools to send massive concurrent batches of OTP guesses. By racing the rate-limit mechanism, the attacker can successfully brute-force the 2FA code, leading to a complete Account Takeover of any user on the platform.</p>
+<h2><strong>Suggested Remediation:</strong></h2>
+<ul>
+<li>
+<p>Implement strict, atomic transaction locking on the user's session state when processing 2FA attempts.</p>
+</li>
+<li>
+<p>Ensure the rate-limit counter is incremented and checked atomically before processing the OTP payload.</p>
+</li>
+</ul>
+]]></content>
+    <author>
+      <name>Stinger</name>
+    </author>
+    <category term="Bug Bounty"></category>
+  </entry>
   <entry>
     <title>Auditor</title>
     <link href="https://mohamed-goodv.github.io/posts/audito/auditor/" rel="alternate" type="text/html"/>
     <id>https://mohamed-goodv.github.io/posts/audito/auditor/</id>
     <published>2026-05-26T00:00:00.000Z</published>
     <updated>2026-05-26T00:00:00.000Z</updated>
-    <summary>Web cahllenge</summary>
+    <summary>SSRF & CRLF Injection</summary>
     <content type="html"><![CDATA[<p>when we see the source code</p>
 <p>we will find in this section that he get the <code>debug_token</code> and <code>charset</code> from the user by a click</p>
 <pre><code>fmt.Printf(`
@@ -96,10 +157,7 @@ content-Type :proxy:&lt;http://127.0.0.1:5000&gt;
     <published>2026-03-25T00:00:00.000Z</published>
     <updated>2026-03-25T00:00:00.000Z</updated>
     <summary>Writeup for CAT CTF 26 Entry Level challenges</summary>
-    <content type="html"><![CDATA[<p>&lt;div align="center"&gt;</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:695/1*FFUyRKJ5mb8AH0mfob6O0g.png" alt="" /></p>
-<p>&lt;/div&gt;</p>
-<h2>Table of Contents</h2>
+    <content type="html"><![CDATA[<h2>Table of Contents</h2>
 <ul>
 <li><a href="#challenge-1--purified-xss">Challenge 1 — Purified? (XSS)</a></li>
 <li><a href="#challenge-2--lfi-to-rce-php">Challenge 2 — LFI to RCE (PHP)</a></li>
@@ -253,14 +311,13 @@ let’s read the flag :</p>
     <category term="CTF"></category>
   </entry>
   <entry>
-    <title>Flags in the Air— Web CTF Challenge by connectors</title>
+    <title>Flags in the Air — Web CTF Challenge by connectors</title>
     <link href="https://mohamed-goodv.github.io/posts/flag-in-the-air/" rel="alternate" type="text/html"/>
     <id>https://mohamed-goodv.github.io/posts/flag-in-the-air/</id>
     <published>2025-09-14T00:00:00.000Z</published>
     <updated>2025-09-14T00:00:00.000Z</updated>
     <summary>Web CTF Challenge by connectors</summary>
     <content type="html"><![CDATA[<h2>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</h2>
-<p><img src="https://miro.medium.com/v2/resize:fit:526/1*1kct6CltfN3w_k-PVk7PcQ.png" alt="" /></p>
 <p>Source code Download from <a href="https://github.com/MushroomWasp/blog/blob/main/flags-in-the-air/FlagsInTheAir.zip">here</a></p>
 <p>The challenge was a login page without a registration page. The first thing I tried was injecting some SQLi payloads, but they all failed.</p>
 <p>After that, I opened the source code to look for leaked credentials, but I didn’t find anything.</p>
