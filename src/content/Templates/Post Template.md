@@ -1,11 +1,14 @@
 ---
-title:
-published:
-description:
+title: 
+published: 
+description: 
+image: ./cover.png
 tags: []
-category:
+category: 
 draft: false
 pinned: false
 encrypted: false
-password: "" 
+password: ""
+lang: en
+comment: true
 ---

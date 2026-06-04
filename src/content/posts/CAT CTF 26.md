@@ -12,13 +12,10 @@ draft: false
 pinned: false
 encrypted: false
 password: ""
+image: https://miro.medium.com/v2/resize:fit:695/1*FFUyRKJ5mb8AH0mfob6O0g.png
+lang: en
+comment: true
 ---
-<div align="center">
-
-![](https://miro.medium.com/v2/resize:fit:695/1*FFUyRKJ5mb8AH0mfob6O0g.png)
-
-</div>
-
 
 ## Table of Contents
 - [Challenge 1 — Purified? (XSS)](#challenge-1--purified-xss)

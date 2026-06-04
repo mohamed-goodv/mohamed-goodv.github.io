@@ -1,14 +1,21 @@
 ---
 title: Auditor
 published: 2026-05-26
-description: Web cahllenge
-tags: [CTF,Apache,Fahemsec]
+description: SSRF & CRLF Injection 
+tags:
+  - CTF
+  - Apache
+  - Fahemsec
 category: CTF
 draft: false
 pinned: false
 encrypted: false
 password: ""
+image: ./cover.webp
+lang: en
+comment: true
 ---
+
 when we see the source code
 
 we will find in this section that he get the `debug_token` and `charset` from the user by a click

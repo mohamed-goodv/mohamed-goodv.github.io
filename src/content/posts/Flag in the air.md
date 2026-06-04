@@ -1,5 +1,5 @@
 ---
-title: Flags in the Air— Web CTF Challenge by connectors
+title: Flags in the Air — Web CTF Challenge by connectors
 published: 2025-09-14
 description: Web CTF Challenge by connectors
 tags:
@@ -9,10 +9,15 @@ tags:
 category: CTF
 draft: false
 pinned: false
+image: https://miro.medium.com/v2/resize:fit:526/1*1kct6CltfN3w_k-PVk7PcQ.png
+encrypted: false
+password: ""
+lang: en
+comment: true
 ---
+
 ## بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
 
-![](https://miro.medium.com/v2/resize:fit:526/1*1kct6CltfN3w_k-PVk7PcQ.png)
 
 Source code Download from [here](https://github.com/MushroomWasp/blog/blob/main/flags-in-the-air/FlagsInTheAir.zip)
 

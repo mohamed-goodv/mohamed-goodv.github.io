@@ -15,5 +15,15 @@ export const profileConfig: ProfileConfig = {
 			icon: "fa7-brands:github",
 			url: "https://github.com/mohamed-goodv",
 		},
+		 {
+        name: "LinkedIn",
+        icon: "fa7-brands:linkedin",
+        url: "https://linkedin.com/in/xemyx",
+    },
+    {
+        name: "HackTheBox",
+        icon: "simple-icons:hackthebox",
+        url: "https://app.hackthebox.com/profile/2354788",
+    },
 	],
 };

@@ -269,7 +269,13 @@
     "PHP": 81,
     "RCE": 82,
     "Apache": 83,
-    "Fahemsec": 84
+    "Fahemsec": 84,
+    "Tag1": 85,
+    "Tag2": 86,
+    "Tag3": 87,
+    "Bugboount": 88,
+    "2FA": 89,
+    "Race-Condtion": 90
   },
   "_version": 3
 }
