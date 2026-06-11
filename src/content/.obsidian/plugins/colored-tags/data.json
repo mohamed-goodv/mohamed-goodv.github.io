@@ -275,7 +275,9 @@
     "Tag3": 87,
     "Bugboount": 88,
     "2FA": 89,
-    "Race-Condtion": 90
+    "Race-Condtion": 90,
+    "sqli": 91,
+    "CVE": 92
   },
   "_version": 3
 }
