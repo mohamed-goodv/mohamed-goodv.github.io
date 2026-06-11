@@ -5,7 +5,7 @@
   <link href="https://mohamed-goodv.github.io/" rel="alternate" type="text/html"/>
   <link href="https://mohamed-goodv.github.io/atom.xml" rel="self" type="application/atom+xml"/>
   <id>https://mohamed-goodv.github.io/</id>
-  <updated>2026-06-11T23:27:32.870Z</updated>
+  <updated>2026-06-11T23:34:56.020Z</updated>
   <language>en</language>
   <entry>
     <title>ICMTC 2026 | Web challenges</title>
@@ -336,135 +336,6 @@ let’s read the flag :</p>
 <pre><code>CATF{TH3_M05T_TH1NG_1_L0V3_AB0UT_PHP_15_TH4T_H0W3V3R_SM4LL_TH3_C0D3_15_Y0U_C4N_ALW4Y5_G3T_4N_RCE}
 </code></pre>
 <p>And that’s all, hope you find it well</p>
-]]></content>
-    <author>
-      <name>Stinger</name>
-    </author>
-    <category term="CTF"></category>
-  </entry>
-  <entry>
-    <title>Flags in the Air — Web CTF Challenge by connectors</title>
-    <link href="https://mohamed-goodv.github.io/posts/flag-in-the-air/" rel="alternate" type="text/html"/>
-    <id>https://mohamed-goodv.github.io/posts/flag-in-the-air/</id>
-    <published>2025-09-14T00:00:00.000Z</published>
-    <updated>2025-09-14T00:00:00.000Z</updated>
-    <summary>Web CTF Challenge by connectors</summary>
-    <content type="html"><![CDATA[<h2>بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</h2>
-<p>Source code Download from <a href="https://github.com/MushroomWasp/blog/blob/main/flags-in-the-air/FlagsInTheAir.zip">here</a></p>
-<p>The challenge was a login page without a registration page. The first thing I tried was injecting some SQLi payloads, but they all failed.</p>
-<p>After that, I opened the source code to look for leaked credentials, but I didn’t find anything.</p>
-<p>However, I noticed <strong>something</strong>. In <code>config.py</code>, there was a secret key: <code>a-very-secret-key</code>. The <code>Dockerfile</code> also <strong>had</strong> another secret key: <code>your-secret-key</code></p>
-<p>So I tried to generate a <strong>JWT</strong> token with admin credentials.</p>
-<p>in <code>auth.py</code></p>
-<pre><code>payload = {  
-        'exp': datetime.now(timezone.utc) + timedelta(hours=1),  
-        'iat': datetime.now(timezone.utc),  
-        'sub': username,  
-        =='access'====: access_level  
-    }==    ==return== ==jwt.encode(  
-        payload,  
-        current_app.config[===='SECRET_KEY'====],  
-        algorithm====='HS256'==    ==)==
-</code></pre>
-<p>That was the payload. So, I <strong>went</strong> to <code>jwt.io</code> and generated a token with full access.</p>
-<p>I then tried to go to the <code>/data</code> directory with the generated token, but I <strong>failed</strong>. I also tried it with 2FA access and <strong>failed</strong> again.</p>
-<p>Now, it’s time to analyze the source code,</p>
-<p>starting with the <code>/login</code> route in the <code>app.py</code> file.</p>
-<pre><code>@app.route('/login', methods=['GET', 'POST'])  
-def login():  
-    if request.method == 'GET':  
-        return render_template('login.html')  
-  
-    data = request.get_json()  
-  
-    username = data.get('username')  
-    password = data.get('password')  
-  
-    if username in TWO_FA_CODES:  
-        TWO_FA_CODES[username] = None  
-  
-    if USERS.get(username) == password:  
-        code = generate_2fa_code()  
-        TWO_FA_CODES[username] = code  
-          
-        token = generate_jwt(username, '2fa')  
-          
-        print(f"Generated 2FA code for {username}: {code}")  
-        return jsonify({"message": "2FA required", "token": token})  
-  
-    return jsonify({"message": "Invalid credentials"}), 401
-</code></pre>
-<p>First, it gets the username and checks if it exists in the <code>TWO_FA_CODES</code> dictionary. If it does, the code sets that 2fa value to <code>None</code>.</p>
-<p>After that, it checks if the provided password is valid and then generates a 2FA code,</p>
-<p>it <strong>doesn’t</strong> check <strong>if</strong> the username <strong>exists</strong> in the <code>USERS</code> table. So, I tried to <strong>enter</strong> a <strong>non-existent</strong> user with a null password to see what would happen.</p>
-<p>Press enter or click to view image in full size</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:700/1*23h3m42_LgJq2pmYbR_bqw.png" alt="" /></p>
-<p>As you can see, it gave me the 2FA token.</p>
-<p>Next, I examined the <code>/verify-2fa</code> route</p>
-<pre><code>@app.route('/verify-2fa', methods=['GET', 'POST'])  
-def verify_2fa():  
-    if request.method == 'GET':  
-        return render_template('verify_2fa.html')  
-  
-    @token_required('2fa')  
-    def post_verify_2fa(current_user=None):  
-        data = request.get_json()  
-        code = data.get('code')  
-          
-        if not current_user:  
-            return jsonify({"message": "Auth token is missing!"}), 401  
-  
-        if TWO_FA_CODES.get(current_user) == code:  
-            del TWO_FA_CODES[current_user]  
-              
-            token = generate_jwt(current_user, 'full')  
-            return jsonify({"message": "Login successful!", "token": token})  
-  
-        return jsonify({"message": "Invalid 2FA code"}), 401  
-      
-    return post_verify_2fa()
-</code></pre>
-<p>This endpoint retrieves the 2FA code from the request data and compares it with the code stored in the <code>TWO_FA_CODES</code> dictionary for the current user. If they match, it deletes the 2FA code from the dictionary and generates a new JWT token with a 'full' access.</p>
-<p>So, in the <code>/verify-2fa</code> route, I tried to bypass it with many tricks, one of which was using a <strong>null</strong> value. When I tried this, it worked, but to be honest, that was just my luck! 😂</p>
-<p>I will now explain why this <strong>normally wouldn’t work</strong>.</p>
-<p>Press enter or click to view image in full size</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:700/1*O8SxcXqG-H9e00w0MSkENA.png" alt="" /></p>
-<p>When I went back to the source code, I looked at the <code>/login</code> route again.</p>
-<p><a href="https://medium.com/write?source=promotion_paragraph---post_body_banner_better_place_scribble--c3a7b66f4398---------------------------------------"></a></p>
-<p>If the username exists, the code sets that user’s 2FA value to <code>None</code>, and if the password is correct, it generates a new token.</p>
-<p>This led me to wonder: what would happen if I entered an invalid password?</p>
-<p>So, I entered the correct username with a wrong password.</p>
-<p>Press enter or click to view image in full size</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:700/1*y9PhnOknjohLtI9XcZ3sUA.png" alt="" /></p>
-<p>The 2FA value should set to <code>None</code>.</p>
-<p>So, we will try the <code>null</code> payload again, this time with the <code>code</code> parameter.</p>
-<p>Press enter or click to view image in full size</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:700/1*grT4-yoYf9AX8GW8h1mlDQ.png" alt="" /></p>
-<p>It <strong>gave</strong> me <strong>a new</strong> token with full access and redirected me to the <code>/dashboard</code> page.</p>
-<p>This was a page that allowed for command execution,</p>
-<p>so I tried running the <code>ls</code> command.</p>
-<p>Press enter or click to view image in full size</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:700/1*Z5NFk7xJZjRG40d_r0e8fg.png" alt="" /></p>
-<p>tried to get the flag in multiple ways, but I couldn’t.</p>
-<p>However, I remembered seeing a <strong>Dockerfile</strong> when I first looked through the source code.</p>
-<p>When I opened it, this is what I saw:</p>
-<pre><code>CMD sh -c "(while true; do echo '[DEBUG] healthcheck ok'; sleep 5; done) &amp; \  
-           (while true; do echo '[DEBUG] Flag{......}' &gt;&amp;1; sleep 10; done) &amp; \  
-           rm Dockerfile &amp;&amp; python app.py"
-</code></pre>
-<p>This line <strong>meant that</strong> the server <strong>echoes</strong> the flag every 10 <strong>seconds</strong>.</p>
-<p>I <strong>tried</strong> the <code>ps aux</code> command and anther commands, but they all <strong>failed</strong>. So, I passed the <strong>Dockerfile</strong> to an AI for help, and it <strong>gave</strong> me the following command:</p>
-<p>timeout 15 cat /proc/1/fd/1</p>
-<p>I didn’t know what this was, so I asked the AI to explain it to me:</p>
-<ul>
-<li><code>timeout 15</code>: This <strong>makes</strong> the <strong>following</strong> command <strong>execute</strong> for a 15 <strong>seconds</strong>.</li>
-<li><code>/proc/1/fd/1</code>: This is the file descriptor for <strong>standard output</strong> in Linux.</li>
-</ul>
-<p>So, this payload tells the server to <strong>capture</strong> the output from that file descriptor for up to 15 <strong>seconds</strong>.</p>
-<p>Press enter or click to view image in full size</p>
-<p><img src="https://miro.medium.com/v2/resize:fit:700/1*MatWZigwXTTDuEwVwIeuJA.png" alt="" /></p>
-<p>— — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —</p>
-<p>تم بحمد الله✨</p>
 ]]></content>
     <author>
       <name>Stinger</name>
