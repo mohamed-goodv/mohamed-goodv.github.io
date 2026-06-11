@@ -1,4 +1,85 @@
-<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Stinger</title><description>Mohamed Goudam&apos;s Personal Blog</description><link>https://mohamed-goodv.github.io/</link><language>en</language><item><title>Auditor</title><link>https://mohamed-goodv.github.io/posts/audito/auditor/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/audito/auditor/</guid><description>SSRF &amp; CRLF Injection</description><pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;when we see the source code&lt;/p&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Stinger</title><description>Mohamed Goudam&apos;s Personal Blog</description><link>https://mohamed-goodv.github.io/</link><language>en</language><item><title>ICMTC 2026 | Web challenges</title><link>https://mohamed-goodv.github.io/posts/icmtc-2026-ctf/icmtc-2026/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/icmtc-2026-ctf/icmtc-2026/</guid><description>ICMTC 2026 | 3 Web challenges
+1-hard
+1-Meduim
+1-easy</description><pubDate>Fri, 12 Jun 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Dash Rush - Hard&lt;/h1&gt;
+&lt;p&gt;It&apos;s was a little bit easy challenge&lt;/p&gt;
+&lt;p&gt;let&apos;s dive into challenge&lt;/p&gt;
+&lt;p&gt;you can download the source code from here&lt;/p&gt;
+&lt;p&gt;when you see the source code in&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;routes.js&lt;/code&gt; :&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;let flag = null;
+
+if (account.coins &amp;gt;= 1337) {
+
+	flag = &quot;HTB{admin_jwt_theft_insider_trading_master}&quot;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;for the first while i think the challenge about get the admin account to get the point&apos;s or will be a logic bug&lt;/p&gt;
+&lt;p&gt;but when i get into the package.json file i found this description 😂&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;CVE-2025-29744 SQL Injection Demo
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;i think that&apos;s was a fault by the admin but it make the challenge easier&lt;/p&gt;
+&lt;p&gt;so the first thing i searched for the &lt;code&gt;CVE&lt;/code&gt; to get the details&lt;/p&gt;
+&lt;p&gt;i found this write-up what&apos;s will be useful&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://awwfensive.medium.com/exploiting-cve-2025-29744-in-pg-promise-when-prepared-statements-arent-safe-5408360ce342&quot;&gt;CVE-2025-29744 &lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;we will explain the details but after this we will dive into the code again&lt;/p&gt;
+&lt;p&gt;so i was looking for the&lt;code&gt;sql query&apos;s&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;in &lt;code&gt;database.js &lt;/code&gt;i found this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static async placeStake(username, contestantId, amount) {
+
+try {
+
+   	const updateQuery =
+   
+   	&quot;UPDATE accounts SET coins = coins-$1 WHERE username=$2;&quot;;
+   
+   const insertQuery =
+   
+ 		&quot;INSERT INTO stakes (username, contestant_id, amount) VALUES                  (  $1,$2,$3)&quot;;
+   
+     
+   
+   const updateParams = [amount, username];
+   
+   const insertParams = [username, contestantId, amount];
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;code&gt;updateQuery&lt;/code&gt;  : it have the same query that i found in the CVE link&lt;/p&gt;
+&lt;p&gt;and it take the params from &lt;code&gt;/stack&lt;/code&gt; endpoint&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;	static async placeStake(contestantId, amount, token) {
+		return this.request(&quot;/stake&quot;, {
+			method: &quot;POST&quot;,
+			headers: {
+				Authorization: `Bearer ${token}`,
+				},
+			body: { contestantId, amount },
+		});
+	}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;the query have the &lt;code&gt;coins-$1&lt;/code&gt; that if i put the amount with &lt;code&gt;-10&lt;/code&gt; the query will be like this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UPDATE accounts SET coins = coins--10 WHERE username=stinger;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;that will  a comment&lt;/p&gt;
+&lt;p&gt;But it will gen a syntax error so we can to preform the exploit&lt;/p&gt;
+&lt;p&gt;from the same like you will find the &lt;code&gt;\n&lt;/code&gt; trick that will make a new line in the qurey like this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UPDATE accounts SET coins = coins--10\n
+; WHERE username=stinger;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;for more details you can read the write-up&lt;/p&gt;
+&lt;p&gt;so now it was clear to us it&apos;s  a second  order &lt;code&gt;sqlinjection&lt;/code&gt; the fist thing we will&lt;br /&gt;
+make a new account with this user name&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;	xemy\n; UPDATE accounts SET coins=2000; --
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;as this :&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./request1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;then we will go to &lt;code&gt;/api/stack&lt;/code&gt; and put the amount to &lt;code&gt;-10&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./request2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;so the application will take the amount and the registered  username and the query be like this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UPDATE accounts SET coins = coins--10 WHERE username=&apos;xemy ; UPDATE accounts SET coins=2000; --&apos;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;and when you go to &lt;code&gt;/api/account &lt;/code&gt; you can find the &lt;code&gt;flag&lt;/code&gt;
+&lt;img src=&quot;./request3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;hr /&gt;
+</content:encoded></item><item><title>Auditor</title><link>https://mohamed-goodv.github.io/posts/audito/auditor/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/audito/auditor/</guid><description>SSRF &amp; CRLF Injection</description><pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;when we see the source code&lt;/p&gt;
 &lt;p&gt;we will find in this section that he get the &lt;code&gt;debug_token&lt;/code&gt; and &lt;code&gt;charset&lt;/code&gt; from the user by a click&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;fmt.Printf(`
     &amp;lt;tr&amp;gt;
