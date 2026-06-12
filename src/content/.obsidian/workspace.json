@@ -35,7 +35,8 @@
               "title": "ICMTC 2026"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -238,15 +239,15 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "60fdca287e5259e3",
+  "active": "3560608c6f6887bd",
   "lastOpenFiles": [
+    "posts/Flag in the air.md",
     "posts/CAT CTF 26.md",
     "posts/ICMTC 2026 CTF/request2.png",
     "posts/ICMTC 2026 CTF/request3.png",
     "posts/ICMTC 2026 CTF/cover.jpg",
     "posts/ICMTC 2026 CTF/ICMTC 2026.md",
     "posts/ICMTC 2026 CTF/request1.png",
-    "posts/Flag in the air.md",
     "posts/Audito/Auditor.md",
     "posts/Audito/image.png",
     "posts/Audito/image2.png",

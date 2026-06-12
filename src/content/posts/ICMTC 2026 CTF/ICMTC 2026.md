@@ -12,7 +12,7 @@ tags:
   - sqli
   - CVE
 category:
-draft: false
+draft: true
 pinned: false
 encrypted: false
 password: ""
