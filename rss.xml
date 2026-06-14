@@ -1,4 +1,112 @@
-<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Stinger</title><description>Mohamed Goudam&apos;s Personal Blog</description><link>https://mohamed-goodv.github.io/</link><language>en</language><item><title>Auditor</title><link>https://mohamed-goodv.github.io/posts/audito/auditor/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/audito/auditor/</guid><description>SSRF &amp; CRLF Injection</description><pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;when we see the source code&lt;/p&gt;
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Stinger</title><description>Mohamed Goudam&apos;s Personal Blog</description><link>https://mohamed-goodv.github.io/</link><language>en</language><item><title>ICMTC 2026 | Web challenge</title><link>https://mohamed-goodv.github.io/posts/icmtc-2026-ctf/icmtc-2026/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/icmtc-2026-ctf/icmtc-2026/</guid><description>ICMTC 2026 | Web challenge | Hard challenge</description><pubDate>Fri, 12 Jun 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;Dash Rush - Hard&lt;/h1&gt;
+&lt;p&gt;It&apos;s was a little bit easy challenge&lt;/p&gt;
+&lt;p&gt;let&apos;s dive into challenge&lt;/p&gt;
+&lt;p&gt;you can download the source code from here&lt;/p&gt;
+&lt;p&gt;when you see the source code in&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;routes.js&lt;/code&gt; :&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;let flag = null;
+
+if (account.coins &amp;gt;= 1337) {
+
+	flag = &quot;HTB{admin_jwt_theft_insider_trading_master}&quot;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;for the first while i think the challenge about get the admin account to get the point&apos;s or will be a logic bug&lt;/p&gt;
+&lt;p&gt;but when i get into the package.json file i found this description 😂&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;CVE-2025-29744 SQL Injection Demo
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;i think that&apos;s was a fault by the admin but it make the challenge easier&lt;/p&gt;
+&lt;p&gt;so the first thing i searched for the &lt;code&gt;CVE&lt;/code&gt; to get the details&lt;/p&gt;
+&lt;p&gt;i found this write-up what&apos;s will be useful&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://awwfensive.medium.com/exploiting-cve-2025-29744-in-pg-promise-when-prepared-statements-arent-safe-5408360ce342&quot;&gt;CVE-2025-29744 &lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;we will explain the details but after this we will dive into the code again&lt;/p&gt;
+&lt;p&gt;so i was looking for the&lt;code&gt;sql query&apos;s&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;in &lt;code&gt;database.js &lt;/code&gt;i found this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;static async placeStake(username, contestantId, amount) {
+
+try {
+
+   	const updateQuery =
+   
+   	&quot;UPDATE accounts SET coins = coins-$1 WHERE username=$2;&quot;;
+   
+   const insertQuery =
+   
+ 		&quot;INSERT INTO stakes (username, contestant_id, amount) VALUES                  (  $1,$2,$3)&quot;;
+   
+     
+   
+   const updateParams = [amount, username];
+   
+   const insertParams = [username, contestantId, amount];
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;code&gt;updateQuery&lt;/code&gt;  : it have the same query that i found in the CVE link&lt;/p&gt;
+&lt;p&gt;and it take the params from &lt;code&gt;/stack&lt;/code&gt; endpoint&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;	static async placeStake(contestantId, amount, token) {
+		return this.request(&quot;/stake&quot;, {
+			method: &quot;POST&quot;,
+			headers: {
+				Authorization: `Bearer ${token}`,
+				},
+			body: { contestantId, amount },
+		});
+	}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;the query have the &lt;code&gt;coins-$1&lt;/code&gt; that if i put the amount with &lt;code&gt;-10&lt;/code&gt; the query will be like this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UPDATE accounts SET coins = coins--10 WHERE username=stinger;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;that will  a comment&lt;/p&gt;
+&lt;p&gt;But it will gen a syntax error so we can to preform the exploit&lt;/p&gt;
+&lt;p&gt;from the same like you will find the &lt;code&gt;\n&lt;/code&gt; trick that will make a new line in the qurey like this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UPDATE accounts SET coins = coins--10\n
+; WHERE username=stinger;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;for more details you can read the write-up&lt;/p&gt;
+&lt;p&gt;so now it was clear to us it&apos;s  a second  order &lt;code&gt;sqlinjection&lt;/code&gt; the fist thing we will&lt;br /&gt;
+make a new account with this user name&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;	xemy\n; UPDATE accounts SET coins=2000; --
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;as this :&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./request1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;then we will go to &lt;code&gt;/api/stack&lt;/code&gt; and put the amount to &lt;code&gt;-10&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./request2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;so the application will take the amount and the registered  username and the query be like this&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;UPDATE accounts SET coins = coins--10 WHERE username=&apos;xemy ; UPDATE accounts SET coins=2000; --&apos;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;and when you go to &lt;code&gt;/api/account &lt;/code&gt; you can find the &lt;code&gt;flag&lt;/code&gt;
+&lt;img src=&quot;./request3.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;hr /&gt;
+</content:encoded></item><item><title>Race condition Lead to 2FA Bypass</title><link>https://mohamed-goodv.github.io/posts/2fa-bypass-with-race-condition/2fa-bypass-with-race-condition/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/2fa-bypass-with-race-condition/2fa-bypass-with-race-condition/</guid><description>Race condition Lead to 2FA bypass in an external bugbounty programe</description><pubDate>Fri, 05 Jun 2026 00:00:00 GMT</pubDate><content:encoded>&lt;h1&gt;بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ&lt;/h1&gt;
+&lt;p&gt;During my testing of a web application,&lt;/p&gt;
+&lt;p&gt;I was testing the 2FA function in the web app, so I tried multiple ways to bypass it, but all of them failed and the function seemed secure.&lt;/p&gt;
+&lt;p&gt;However, I became interested in how the application handled multiple verification attempts arriving at the same time.&lt;/p&gt;
+&lt;p&gt;To test this scenario, I intercepted the OTP verification request and moved it to Burp Suite Repeater.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Steps To Reproduce:&lt;/strong&gt;&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;Navigate to the login portal and enter valid credentials for a victim account to reach the 2FA prompt.&lt;/li&gt;
+&lt;li&gt;Intercept the 2FA submission request using Burp Suite.&lt;/li&gt;
+&lt;li&gt;Send the intercepted request to Burp Repeater.&lt;/li&gt;
+&lt;li&gt;Create a group of parallel requests (e.g., using Burp&apos;s &quot;Send group (parallel)&quot; feature or Turbo Intruder).&lt;/li&gt;
+&lt;li&gt;In this group, include several requests with incorrect 2FA codes and include one request with the correct 2FA code.&lt;/li&gt;
+&lt;li&gt;Send the requests concurrently.&lt;/li&gt;
+&lt;li&gt;Observe that the server responds with &lt;code&gt;200 OK&lt;/code&gt; for the request containing the valid code, returning an &lt;code&gt;autologin&lt;/code&gt; token in the response body.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&quot;./request1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;At this point, I knew that the application takes this token and sends it to &lt;code&gt;/autologin/&amp;lt;token&amp;gt;&lt;/code&gt; to generate the &lt;code&gt;access_token&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;./reqeust2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&quot;bounty.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Impact&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;This vulnerability renders the 2FA brute-force protection ineffective. An attacker with compromised credentials (e.g., via credential stuffing) can utilize automated tools to send massive concurrent batches of OTP guesses. By racing the rate-limit mechanism, the attacker can successfully brute-force the 2FA code, leading to a complete Account Takeover of any user on the platform.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Suggested Remediation:&lt;/strong&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Implement strict, atomic transaction locking on the user&apos;s session state when processing 2FA attempts.&lt;/li&gt;
+&lt;li&gt;Ensure the rate-limit counter is incremented and checked atomically before processing the OTP payload.&lt;/li&gt;
+&lt;/ul&gt;
+</content:encoded></item><item><title>Auditor</title><link>https://mohamed-goodv.github.io/posts/audito/auditor/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/audito/auditor/</guid><description>SSRF &amp; CRLF Injection</description><pubDate>Tue, 26 May 2026 00:00:00 GMT</pubDate><content:encoded>&lt;p&gt;when we see the source code&lt;/p&gt;
 &lt;p&gt;we will find in this section that he get the &lt;code&gt;debug_token&lt;/code&gt; and &lt;code&gt;charset&lt;/code&gt; from the user by a click&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;fmt.Printf(`
     &amp;lt;tr&amp;gt;
@@ -214,4 +322,120 @@ let’s read the flag :&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;CATF{TH3_M05T_TH1NG_1_L0V3_AB0UT_PHP_15_TH4T_H0W3V3R_SM4LL_TH3_C0D3_15_Y0U_C4N_ALW4Y5_G3T_4N_RCE}
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;And that’s all, hope you find it well&lt;/p&gt;
+</content:encoded></item><item><title>Flags in the Air — Web CTF Challenge by connectors</title><link>https://mohamed-goodv.github.io/posts/flag-in-the-air/</link><guid isPermaLink="true">https://mohamed-goodv.github.io/posts/flag-in-the-air/</guid><description>Web CTF Challenge by connectors</description><pubDate>Sun, 14 Sep 2025 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ&lt;/h2&gt;
+&lt;p&gt;Source code Download from &lt;a href=&quot;https://github.com/MushroomWasp/blog/blob/main/flags-in-the-air/FlagsInTheAir.zip&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The challenge was a login page without a registration page. The first thing I tried was injecting some SQLi payloads, but they all failed.&lt;/p&gt;
+&lt;p&gt;After that, I opened the source code to look for leaked credentials, but I didn’t find anything.&lt;/p&gt;
+&lt;p&gt;However, I noticed &lt;strong&gt;something&lt;/strong&gt;. In &lt;code&gt;config.py&lt;/code&gt;, there was a secret key: &lt;code&gt;a-very-secret-key&lt;/code&gt;. The &lt;code&gt;Dockerfile&lt;/code&gt; also &lt;strong&gt;had&lt;/strong&gt; another secret key: &lt;code&gt;your-secret-key&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;So I tried to generate a &lt;strong&gt;JWT&lt;/strong&gt; token with admin credentials.&lt;/p&gt;
+&lt;p&gt;in &lt;code&gt;auth.py&lt;/code&gt;&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;payload = {  
+        &apos;exp&apos;: datetime.now(timezone.utc) + timedelta(hours=1),  
+        &apos;iat&apos;: datetime.now(timezone.utc),  
+        &apos;sub&apos;: username,  
+        ==&apos;access&apos;====: access_level  
+    }==    ==return== ==jwt.encode(  
+        payload,  
+        current_app.config[====&apos;SECRET_KEY&apos;====],  
+        algorithm=====&apos;HS256&apos;==    ==)==
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;That was the payload. So, I &lt;strong&gt;went&lt;/strong&gt; to &lt;code&gt;jwt.io&lt;/code&gt; and generated a token with full access.&lt;/p&gt;
+&lt;p&gt;I then tried to go to the &lt;code&gt;/data&lt;/code&gt; directory with the generated token, but I &lt;strong&gt;failed&lt;/strong&gt;. I also tried it with 2FA access and &lt;strong&gt;failed&lt;/strong&gt; again.&lt;/p&gt;
+&lt;p&gt;Now, it’s time to analyze the source code,&lt;/p&gt;
+&lt;p&gt;starting with the &lt;code&gt;/login&lt;/code&gt; route in the &lt;code&gt;app.py&lt;/code&gt; file.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@app.route(&apos;/login&apos;, methods=[&apos;GET&apos;, &apos;POST&apos;])  
+def login():  
+    if request.method == &apos;GET&apos;:  
+        return render_template(&apos;login.html&apos;)  
+  
+    data = request.get_json()  
+  
+    username = data.get(&apos;username&apos;)  
+    password = data.get(&apos;password&apos;)  
+  
+    if username in TWO_FA_CODES:  
+        TWO_FA_CODES[username] = None  
+  
+    if USERS.get(username) == password:  
+        code = generate_2fa_code()  
+        TWO_FA_CODES[username] = code  
+          
+        token = generate_jwt(username, &apos;2fa&apos;)  
+          
+        print(f&quot;Generated 2FA code for {username}: {code}&quot;)  
+        return jsonify({&quot;message&quot;: &quot;2FA required&quot;, &quot;token&quot;: token})  
+  
+    return jsonify({&quot;message&quot;: &quot;Invalid credentials&quot;}), 401
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;First, it gets the username and checks if it exists in the &lt;code&gt;TWO_FA_CODES&lt;/code&gt; dictionary. If it does, the code sets that 2fa value to &lt;code&gt;None&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;After that, it checks if the provided password is valid and then generates a 2FA code,&lt;/p&gt;
+&lt;p&gt;it &lt;strong&gt;doesn’t&lt;/strong&gt; check &lt;strong&gt;if&lt;/strong&gt; the username &lt;strong&gt;exists&lt;/strong&gt; in the &lt;code&gt;USERS&lt;/code&gt; table. So, I tried to &lt;strong&gt;enter&lt;/strong&gt; a &lt;strong&gt;non-existent&lt;/strong&gt; user with a null password to see what would happen.&lt;/p&gt;
+&lt;p&gt;Press enter or click to view image in full size&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://miro.medium.com/v2/resize:fit:700/1*23h3m42_LgJq2pmYbR_bqw.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;As you can see, it gave me the 2FA token.&lt;/p&gt;
+&lt;p&gt;Next, I examined the &lt;code&gt;/verify-2fa&lt;/code&gt; route&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;@app.route(&apos;/verify-2fa&apos;, methods=[&apos;GET&apos;, &apos;POST&apos;])  
+def verify_2fa():  
+    if request.method == &apos;GET&apos;:  
+        return render_template(&apos;verify_2fa.html&apos;)  
+  
+    @token_required(&apos;2fa&apos;)  
+    def post_verify_2fa(current_user=None):  
+        data = request.get_json()  
+        code = data.get(&apos;code&apos;)  
+          
+        if not current_user:  
+            return jsonify({&quot;message&quot;: &quot;Auth token is missing!&quot;}), 401  
+  
+        if TWO_FA_CODES.get(current_user) == code:  
+            del TWO_FA_CODES[current_user]  
+              
+            token = generate_jwt(current_user, &apos;full&apos;)  
+            return jsonify({&quot;message&quot;: &quot;Login successful!&quot;, &quot;token&quot;: token})  
+  
+        return jsonify({&quot;message&quot;: &quot;Invalid 2FA code&quot;}), 401  
+      
+    return post_verify_2fa()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This endpoint retrieves the 2FA code from the request data and compares it with the code stored in the &lt;code&gt;TWO_FA_CODES&lt;/code&gt; dictionary for the current user. If they match, it deletes the 2FA code from the dictionary and generates a new JWT token with a &apos;full&apos; access.&lt;/p&gt;
+&lt;p&gt;So, in the &lt;code&gt;/verify-2fa&lt;/code&gt; route, I tried to bypass it with many tricks, one of which was using a &lt;strong&gt;null&lt;/strong&gt; value. When I tried this, it worked, but to be honest, that was just my luck! 😂&lt;/p&gt;
+&lt;p&gt;I will now explain why this &lt;strong&gt;normally wouldn’t work&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Press enter or click to view image in full size&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://miro.medium.com/v2/resize:fit:700/1*O8SxcXqG-H9e00w0MSkENA.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;When I went back to the source code, I looked at the &lt;code&gt;/login&lt;/code&gt; route again.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://medium.com/write?source=promotion_paragraph---post_body_banner_better_place_scribble--c3a7b66f4398---------------------------------------&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;If the username exists, the code sets that user’s 2FA value to &lt;code&gt;None&lt;/code&gt;, and if the password is correct, it generates a new token.&lt;/p&gt;
+&lt;p&gt;This led me to wonder: what would happen if I entered an invalid password?&lt;/p&gt;
+&lt;p&gt;So, I entered the correct username with a wrong password.&lt;/p&gt;
+&lt;p&gt;Press enter or click to view image in full size&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://miro.medium.com/v2/resize:fit:700/1*y9PhnOknjohLtI9XcZ3sUA.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;The 2FA value should set to &lt;code&gt;None&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;So, we will try the &lt;code&gt;null&lt;/code&gt; payload again, this time with the &lt;code&gt;code&lt;/code&gt; parameter.&lt;/p&gt;
+&lt;p&gt;Press enter or click to view image in full size&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://miro.medium.com/v2/resize:fit:700/1*grT4-yoYf9AX8GW8h1mlDQ.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;It &lt;strong&gt;gave&lt;/strong&gt; me &lt;strong&gt;a new&lt;/strong&gt; token with full access and redirected me to the &lt;code&gt;/dashboard&lt;/code&gt; page.&lt;/p&gt;
+&lt;p&gt;This was a page that allowed for command execution,&lt;/p&gt;
+&lt;p&gt;so I tried running the &lt;code&gt;ls&lt;/code&gt; command.&lt;/p&gt;
+&lt;p&gt;Press enter or click to view image in full size&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://miro.medium.com/v2/resize:fit:700/1*Z5NFk7xJZjRG40d_r0e8fg.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;tried to get the flag in multiple ways, but I couldn’t.&lt;/p&gt;
+&lt;p&gt;However, I remembered seeing a &lt;strong&gt;Dockerfile&lt;/strong&gt; when I first looked through the source code.&lt;/p&gt;
+&lt;p&gt;When I opened it, this is what I saw:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;CMD sh -c &quot;(while true; do echo &apos;[DEBUG] healthcheck ok&apos;; sleep 5; done) &amp;amp; \  
+           (while true; do echo &apos;[DEBUG] Flag{......}&apos; &amp;gt;&amp;amp;1; sleep 10; done) &amp;amp; \  
+           rm Dockerfile &amp;amp;&amp;amp; python app.py&quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This line &lt;strong&gt;meant that&lt;/strong&gt; the server &lt;strong&gt;echoes&lt;/strong&gt; the flag every 10 &lt;strong&gt;seconds&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;I &lt;strong&gt;tried&lt;/strong&gt; the &lt;code&gt;ps aux&lt;/code&gt; command and anther commands, but they all &lt;strong&gt;failed&lt;/strong&gt;. So, I passed the &lt;strong&gt;Dockerfile&lt;/strong&gt; to an AI for help, and it &lt;strong&gt;gave&lt;/strong&gt; me the following command:&lt;/p&gt;
+&lt;p&gt;timeout 15 cat /proc/1/fd/1&lt;/p&gt;
+&lt;p&gt;I didn’t know what this was, so I asked the AI to explain it to me:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;timeout 15&lt;/code&gt;: This &lt;strong&gt;makes&lt;/strong&gt; the &lt;strong&gt;following&lt;/strong&gt; command &lt;strong&gt;execute&lt;/strong&gt; for a 15 &lt;strong&gt;seconds&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;/proc/1/fd/1&lt;/code&gt;: This is the file descriptor for &lt;strong&gt;standard output&lt;/strong&gt; in Linux.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So, this payload tells the server to &lt;strong&gt;capture&lt;/strong&gt; the output from that file descriptor for up to 15 &lt;strong&gt;seconds&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Press enter or click to view image in full size&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://miro.medium.com/v2/resize:fit:700/1*MatWZigwXTTDuEwVwIeuJA.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+&lt;p&gt;— — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —&lt;/p&gt;
+&lt;p&gt;تم بحمد الله✨&lt;/p&gt;
 </content:encoded></item></channel></rss>
