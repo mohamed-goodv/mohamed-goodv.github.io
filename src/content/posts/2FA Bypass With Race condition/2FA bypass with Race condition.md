@@ -4,10 +4,10 @@ published: 2026-06-05
 description: Race condition Lead to 2FA bypass in an external bugbounty programe
 image: ./cover.png
 tags:
-  - "2FA"
-  - "Race-Condtion"
+  - 2FA
+  - Race-Condtion
 category: Bug Bounty
-draft: true
+draft: false
 pinned: false
 encrypted: false
 password: ""

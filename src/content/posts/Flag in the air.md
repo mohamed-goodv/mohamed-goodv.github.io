@@ -7,7 +7,7 @@ tags:
   - Logic
   - JWT
 category: CTF
-draft: true
+draft: false
 pinned: false
 image: https://miro.medium.com/v2/resize:fit:526/1*1kct6CltfN3w_k-PVk7PcQ.png
 encrypted: false

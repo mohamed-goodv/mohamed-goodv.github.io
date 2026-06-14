@@ -1,18 +1,14 @@
 ---
-title: ICMTC 2026 | Web challenges
+title: ICMTC 2026 | Web challenge
 published: 2026-06-12
-description: |-
-  ICMTC 2026 | 3 Web challenges
-  1-hard
-  1-Meduim
-  1-easy
+description: ICMTC 2026 | Web challenge | Hard challenge
 image: ./cover.jpg
 tags:
   - CTF
   - sqli
   - CVE
-category:
-draft: true
+category: CTF
+draft: false
 pinned: false
 encrypted: false
 password: ""
